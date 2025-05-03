@@ -43,6 +43,24 @@
     <url-pattern>/api/products/*</url-pattern>
   </servlet-mapping>
   
+  <!-- Cấu hình ReviewServlet -->
+  <servlet>
+    <servlet-name>ReviewServlet</servlet-name>
+    <servlet-class>com.example.api.controller.ReviewServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>ReviewServlet</servlet-name>
+    <url-pattern>/api/reviews/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ReviewServlet</servlet-name>
+    <url-pattern>/api/products/*/reviews</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ReviewServlet</servlet-name>
+    <url-pattern>/api/product-reviews/*</url-pattern>
+  </servlet-mapping>
+  
   <!-- Cấu hình TestDatabaseServlet -->
   <servlet>
     <servlet-name>TestDatabaseServlet</servlet-name>
@@ -51,6 +69,16 @@
   <servlet-mapping>
     <servlet-name>TestDatabaseServlet</servlet-name>
     <url-pattern>/api/test-db</url-pattern>
+  </servlet-mapping>
+  
+  <!-- Cấu hình CategoryServlet -->
+  <servlet>
+    <servlet-name>CategoryServlet</servlet-name>
+    <servlet-class>com.example.api.controller.CategoryServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>CategoryServlet</servlet-name>
+    <url-pattern>/api/categories/*</url-pattern>
   </servlet-mapping>
   
   <!-- Cấu hình HelloWorldServlet -->

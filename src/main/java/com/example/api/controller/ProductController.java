@@ -93,7 +93,7 @@ public class ProductController {
         
         if (product != null) {
             // Chuyển đổi Product thành Map
-            result = productToMap(product);
+            result.put("product", productToMap(product));
             response.setStatus(HttpServletResponse.SC_OK);
         } else {
             result.put("error", "Không tìm thấy sản phẩm");
@@ -562,15 +562,16 @@ public class ProductController {
     @SuppressWarnings("unchecked")
     private void formatProductPrices(Map<String, Object> result) {
         if (result.containsKey("products")) {
-            List<Map<String, Object>> products = (List<Map<String, Object>>) result.get("products");
+            List<Product> products = (List<Product>) result.get("products");
+            List<Map<String, Object>> formattedProducts = new ArrayList<>();
             NumberFormat formatter = new DecimalFormat("#,###.##");
             
-            for (Map<String, Object> product : products) {
-                if (product.containsKey("price")) {
-                    BigDecimal price = (BigDecimal) product.get("price");
-                    product.put("price", formatter.format(price) + " ₫");
-                }
+            for (Product product : products) {
+                Map<String, Object> productMap = productToMap(product);
+                formattedProducts.add(productMap);
             }
+            
+            result.put("products", formattedProducts);
         }
     }
     

@@ -44,6 +44,13 @@ public class ProductServlet extends HttpServlet {
         // Lấy đường dẫn URI
         String pathInfo = request.getPathInfo();
         
+        // Kiểm tra nếu đường dẫn chứa "/reviews" thì chuyển cho ReviewServlet xử lý
+        if (pathInfo != null && pathInfo.contains("/reviews")) {
+            // Chuyển cho ReviewServlet xử lý
+            request.getRequestDispatcher("/api/reviews" + pathInfo).forward(request, response);
+            return;
+        }
+        
         // Xử lý các endpoint khác nhau
         Map<String, Object> result;
         
@@ -79,6 +86,16 @@ public class ProductServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         
+        // Lấy đường dẫn URI
+        String pathInfo = request.getPathInfo();
+        
+        // Kiểm tra nếu đường dẫn chứa "/reviews" thì chuyển cho ReviewServlet xử lý
+        if (pathInfo != null && pathInfo.contains("/reviews")) {
+            // Chuyển cho ReviewServlet xử lý
+            request.getRequestDispatcher("/api/reviews" + pathInfo).forward(request, response);
+            return;
+        }
+        
         // Kiểm tra Content-Type
         String contentType = request.getContentType();
         Map<String, Object> result;
@@ -112,6 +129,13 @@ public class ProductServlet extends HttpServlet {
         
         // Lấy đường dẫn URI
         String pathInfo = request.getPathInfo();
+        
+        // Kiểm tra nếu đường dẫn chứa "/reviews" thì chuyển cho ReviewServlet xử lý
+        if (pathInfo != null && pathInfo.contains("/reviews")) {
+            // Chuyển cho ReviewServlet xử lý
+            request.getRequestDispatcher("/api/reviews" + pathInfo).forward(request, response);
+            return;
+        }
         
         // Xử lý yêu cầu cập nhật sản phẩm
         Map<String, Object> result;
@@ -149,6 +173,13 @@ public class ProductServlet extends HttpServlet {
         
         // Lấy đường dẫn URI
         String pathInfo = request.getPathInfo();
+        
+        // Kiểm tra nếu đường dẫn chứa "/reviews" thì chuyển cho ReviewServlet xử lý
+        if (pathInfo != null && pathInfo.contains("/reviews")) {
+            // Chuyển cho ReviewServlet xử lý
+            request.getRequestDispatcher("/api/reviews" + pathInfo).forward(request, response);
+            return;
+        }
         
         // Xử lý yêu cầu xóa sản phẩm
         Map<String, Object> result;
