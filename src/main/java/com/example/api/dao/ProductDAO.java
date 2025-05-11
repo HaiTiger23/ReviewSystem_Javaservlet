@@ -184,6 +184,55 @@ public class ProductDAO {
                     if (userId != null) {
                         product.setBookmarked(isProductBookmarked(conn, productId, userId));
                     }
+
+                    // Kiểm tra xem người dùng đã đánh giá chưa
+                    if (userId != null) {
+                        product.setReviewed(isProductReviewed(conn, productId, userId));
+                        System.out.println("Reviewed: " + product.isReviewed());
+                    }
+                    
+                    return product;
+                }
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    /**
+     * Lấy thông tin chi tiết sản phẩm theo slug
+     * 
+     * @param slug Slug sản phẩm
+     * @param userId ID người dùng (nếu đã đăng nhập)
+     * @return Thông tin sản phẩm hoặc null nếu không tìm thấy
+     */
+    public Product getProductBySlug(String slug, Integer userId) {
+        String sql = "SELECT p.*, c.name as category_name FROM products p " +
+                     "LEFT JOIN categories c ON p.category_id = c.id " +
+                     "WHERE p.slug = ?"; 
+        
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, slug);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Product product = mapResultSetToProduct(rs);
+                    product.setCategoryName(rs.getString("category_name"));
+                    
+                    // Lấy danh sách hình ảnh
+                    product.setImages(getProductImages(conn, product.getId()));
+                    
+                    // Lấy danh sách thông số kỹ thuật
+                    product.setSpecifications(getProductSpecifications(conn, product.getId()));
+                    
+                    // Kiểm tra xem sản phẩm có được bookmark bởi người dùng không
+                    if (userId != null) {
+                        product.setBookmarked(isProductBookmarked(conn, product.getId(), userId));
+                    }
                     
                     return product;
                 }
@@ -214,7 +263,7 @@ public class ProductDAO {
             
             try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 // Tạo slug từ tên sản phẩm
-                String slug = SlugUtil.createSlug(product.getName());
+                String slug = SlugUtil.createSlug(product.getName()) + "-" + System.currentTimeMillis();
                 
                 stmt.setString(1, product.getName());
                 stmt.setString(2, slug);
@@ -244,9 +293,11 @@ public class ProductDAO {
                             if (images != null && !images.isEmpty()) {
                                 addProductImages(conn, productId, images);
                             }
-                            
+                            System.out.println("Adding product specifications", specifications.size());
                             // Thêm thông số kỹ thuật
                             if (specifications != null && !specifications.isEmpty()) {
+                                System.out.println("Adding product specifications...");
+                                
                                 addProductSpecifications(conn, productId, specifications);
                             }
                             
@@ -494,6 +545,25 @@ public class ProductDAO {
             }
         }
     }
+
+    /**
+     * Kiểm tra người dùng đã đánh giá sản phẩm chưa
+     *
+     * @param conn Kết nối DB
+     * @param productId ID sản phẩm
+     * @param userId ID người dùng
+     * @return true nếu đã đánh giá, false nếu chưa
+     */
+    private boolean isProductReviewed(Connection conn, int productId, int userId) throws SQLException {
+        String sql = "SELECT id FROM reviews WHERE product_id = ? AND user_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, productId);
+            stmt.setInt(2, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
     
     /**
      * Thêm hình ảnh cho sản phẩm
@@ -530,6 +600,8 @@ public class ProductDAO {
         
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (ProductSpecification spec : specifications) {
+
+                System.out.println("Adding product specification: " + spec.getName() + " - " + spec.getValue());
                 stmt.setInt(1, productId);
                 stmt.setString(2, spec.getName());
                 stmt.setString(3, spec.getValue());

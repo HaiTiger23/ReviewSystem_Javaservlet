@@ -126,7 +126,8 @@ public class ReviewServlet extends HttpServlet {
         
         try {
             // Thêm đánh giá mới: /api/product-reviews/{productId}
-            if (servletPath.equals("/api/product-reviews") && pathInfo != null && pathInfo.matches("/\\d+")) {
+          
+        } catch (Exception e) {  if (servletPath.equals("/api/product-reviews") && pathInfo != null && pathInfo.matches("/\\d+")) {
                 // Lấy ID sản phẩm từ URL
                 int productId = Integer.parseInt(pathInfo.substring(1));
                 
@@ -145,7 +146,6 @@ public class ReviewServlet extends HttpServlet {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 result = Map.of("error", "Endpoint không hợp lệ");
             }
-        } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             result = Map.of("error", "Có lỗi xảy ra: " + e.getMessage());
             e.printStackTrace();

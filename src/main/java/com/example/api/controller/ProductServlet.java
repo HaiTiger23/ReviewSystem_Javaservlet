@@ -99,20 +99,20 @@ public class ProductServlet extends HttpServlet {
         // Kiểm tra Content-Type
         String contentType = request.getContentType();
         Map<String, Object> result;
-        
-        try {
-            if (contentType != null && contentType.startsWith("application/json")) {
-                // Xử lý yêu cầu JSON
-                JsonObject jsonRequest = parseJsonRequest(request);
-                result = productController.addProductJson(jsonRequest, request, response);
-            } else {
-                // Xử lý yêu cầu multipart/form-data
-                result = productController.addProduct(request, response);
-            }
-        } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            result = Map.of("error", "Lỗi server: " + e.getMessage());
-            e.printStackTrace();
+            
+            try {
+                if (contentType != null && contentType.startsWith("application/json")) {
+                    // Xử lý yêu cầu JSON
+                    JsonObject jsonRequest = parseJsonRequest(request);
+                    result = productController.addProductJson(jsonRequest, request, response);
+                } else {
+                    // Xử lý yêu cầu multipart/form-data
+                    result = productController.addProduct(request, response);
+                }
+            } catch (Exception e) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                result = Map.of("error", "Lỗi server: " + e.getMessage());
+                e.printStackTrace();
         }
         
         // Trả về kết quả dưới dạng JSON

@@ -7,14 +7,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.UUID;
 
 /**
  * Lớp tiện ích để xử lý tải lên file
  */
 public class FileUploadUtil {
-    private static final String UPLOAD_DIR = "/uploads";
-    
+    private static final String UPLOAD_DIR = "/Users/macbook/Project/JavaProject/ReviewSystem/uploads";
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "pdf");
+
+
     /**
      * Lưu file tải lên vào thư mục chỉ định
      * 
@@ -34,7 +37,9 @@ public class FileUploadUtil {
         if (fileExt == null || fileExt.isEmpty()) {
             return null;
         }
-        
+        if (!ALLOWED_EXTENSIONS.contains(fileExt.toLowerCase())) {
+            throw new IllegalArgumentException("Định dạng file không được phép");
+        }
         // Tạo tên file mới để tránh trùng lặp
         String newFileName = UUID.randomUUID().toString() + "." + fileExt;
         

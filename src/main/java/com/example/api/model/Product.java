@@ -25,6 +25,7 @@ public class Product {
     private List<String> images;
     private List<ProductSpecification> specifications;
     private boolean isBookmarked;
+    private boolean isReviewed;
     
     // Constructors
     public Product() {
@@ -149,6 +150,14 @@ public class Product {
     
     public void setBookmarked(boolean bookmarked) {
         isBookmarked = bookmarked;
+    }
+    
+    public boolean isReviewed() {
+        return isReviewed;
+    }
+    
+    public void setReviewed(boolean reviewed) {
+        isReviewed = reviewed;
     }
     
     @Override

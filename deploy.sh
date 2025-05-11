@@ -51,9 +51,9 @@ echo -e "${GREEN}Triển khai thành công!${NC}"
 echo -e "${GREEN}Ứng dụng đã được triển khai tại: http://localhost:8080${NC}"
 
 # Hiển thị log Tomcat (tùy chọn)
-echo -e "${YELLOW}Bạn có muốn xem log của Tomcat không? (y/n)${NC}"
-read -r answer
+# echo -e "${YELLOW}Bạn có muốn xem log của Tomcat không? (y/n)${NC}"
+# read -r answer
 
-if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-    tail -f "$TOMCAT_DIR/logs/catalina.$(date +%Y-%m-%d).log"
-fi
+# if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+#     tail -f "$TOMCAT_DIR/logs/catalina.$(date +%Y-%m-%d).log"
+# fi

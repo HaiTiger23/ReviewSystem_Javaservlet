@@ -182,15 +182,18 @@ public class ProductController {
             List<String> images = new ArrayList<>();
             Collection<Part> parts = request.getParts();
             for (Part part : parts) {
-                if (part.getName().startsWith("image_") && part.getSize() > 0) {
-                    // Lưu file và lấy đường dẫn
+                if ((part.getName().equals("images") || part.getName().startsWith("images[")) && part.getSize() > 0) {
                     String imagePath = FileUploadUtil.saveFile(part, "products");
                     if (imagePath != null) {
                         images.add(imagePath);
                     }
                 }
             }
-            
+            if (images.isEmpty()) {
+                result.put("error", "Vui lòng tải lên ít nhất 1 hình ảnh sản phẩm");
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                return result;
+            }
             // Thêm sản phẩm vào cơ sở dữ liệu
             int productId = productService.addProduct(product, images, specifications);
             
