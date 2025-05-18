@@ -5,6 +5,7 @@ import com.example.api.model.ProductSpecification;
 import com.example.api.model.User;
 import com.example.api.service.ProductService;
 import com.example.api.service.AuthService;
+import com.example.api.dao.BookmarkDAO;
 import com.example.api.dao.CategoryDAO;
 import com.example.api.util.FileUploadUtil;
 import com.example.api.util.JwtUtil;
@@ -32,12 +33,14 @@ public class ProductController {
     private ProductService productService;
     private AuthService authService;
     private CategoryDAO categoryDAO;
+    private BookmarkDAO bookmarkDAO;
     private Gson gson;
     
     public ProductController() {
         this.productService = new ProductService();
         this.authService = new AuthService();
         this.categoryDAO = new CategoryDAO();
+        this.bookmarkDAO = new BookmarkDAO();
         this.gson = new Gson();
     }
     
@@ -242,19 +245,12 @@ public class ProductController {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return result;
             }
-            
+
             // Lấy thông tin sản phẩm từ JSON
             String name = jsonRequest.has("name") ? jsonRequest.get("name").getAsString() : null;
             String categoryIdStr = jsonRequest.has("category") ? jsonRequest.get("category").getAsString() : null;
             String priceStr = jsonRequest.has("price") ? jsonRequest.get("price").getAsString() : null;
             String description = jsonRequest.has("description") ? jsonRequest.get("description").getAsString() : "";
-            
-            System.out.println("JSON Request: " + jsonRequest.toString());
-            System.out.println("Name: " + name);
-            System.out.println("Category: " + categoryIdStr);
-            System.out.println("Price: " + priceStr);
-            System.out.println("Description: " + description);
-            System.out.println("UserId: " + userId);
             
             // Kiểm tra dữ liệu đầu vào
             if (name == null || name.trim().isEmpty() ||
@@ -592,6 +588,7 @@ public class ProductController {
         result.put("category", product.getCategoryName());
         result.put("rating", product.getRating());
         result.put("reviewCount", product.getReviewCount());
+        result.put("isReviewed", product.isReviewed());
         
         // Định dạng giá tiền
         NumberFormat formatter = new DecimalFormat("#,###.##");
@@ -612,6 +609,42 @@ public class ProductController {
         // Thêm trạng thái bookmark
         result.put("isBookmarked", product.isBookmarked());
         
+        return result;
+    }
+    /**
+     * Đánh dấu bookmark vào sản phẩm
+     */
+    public Map<String, Object> addBookmark(int productId, HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("Starting addBookmark process...");
+        Integer userId = getUserIdFromToken(request);
+        Map<String, Object> result = new HashMap<>();
+        if (userId == null) {
+            System.out.println("User ID not found. Authentication required.");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            result.put("error", "Yêu cầu xác thực");
+            return result;
+        }
+        Product product = productService.getProductById(productId, userId);
+        if (product == null) {
+            System.out.println("Product not found for ID: " + productId);
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            result.put("error", "Không tìm thấy sản phẩm");
+            return result;
+        }
+        int status = bookmarkDAO.toggleBookmark(productId, userId);
+        System.out.println("Bookmark ID generated");
+
+        if (status != -1) {
+            System.out.println("Bookmark added successfully.");
+            response.setStatus(HttpServletResponse.SC_OK);
+            result.put("message", status == 1 ?"Thêm bookmark thành công" : "Xoá bookmark thành công");
+            result.put("status", status);
+            response.setContentType("application/json");
+            return result;
+        }
+        System.out.println("Failed to add bookmark for product ID: " + productId);
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        result.put("error", "Không thể cập nhật bookmark");
         return result;
     }
 }

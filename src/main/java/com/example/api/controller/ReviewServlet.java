@@ -43,9 +43,11 @@ public class ReviewServlet extends HttpServlet {
         String requestURI = request.getRequestURI();
         
         // Xử lý các endpoint khác nhau
-        Map<String, Object> result;
+        Map<String, Object> result = Map.of("error", "No result available");
         
         try {
+            System.out.println("pathInfo: " + pathInfo);
+            System.out.println("Method: " + request.getMethod());
             // Lấy danh sách đánh giá của sản phẩm: /api/product-reviews/{productId}
             if (servletPath.equals("/api/product-reviews") && pathInfo != null && pathInfo.matches("/\\d+")) {
                 // Lấy ID sản phẩm từ URL
@@ -60,6 +62,7 @@ public class ReviewServlet extends HttpServlet {
                 result = reviewController.getProductReviews(productId, page, limit, sort, request, response);
             }
             // Lấy chi tiết đánh giá: /api/reviews/{reviewId}
+          
             else if (servletPath.equals("/api/reviews") && pathInfo != null && pathInfo.matches("/\\d+")) {
                 // Lấy ID đánh giá từ URL
                 int reviewId = Integer.parseInt(pathInfo.substring(1));
@@ -122,16 +125,22 @@ public class ReviewServlet extends HttpServlet {
         }
         
         // Xử lý các endpoint khác nhau
-        Map<String, Object> result;
-        
+        Map<String, Object> result = Map.of("error", "No result available");
+         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+         System.out.println("pathInfo: " + pathInfo);
+        System.out.println("Method post: " + request.getMethod());
+        System.out.println("servletPath: " + servletPath);
+    
         try {
             // Thêm đánh giá mới: /api/product-reviews/{productId}
           
-        } catch (Exception e) {  if (servletPath.equals("/api/product-reviews") && pathInfo != null && pathInfo.matches("/\\d+")) {
+          if (servletPath.equals("/api/product-reviews") && pathInfo != null && pathInfo.matches("/\\d+")) {
+            System.out.println("Add review");
                 // Lấy ID sản phẩm từ URL
                 int productId = Integer.parseInt(pathInfo.substring(1));
                 
                 // Thêm đánh giá mới
+                 response.setStatus(HttpServletResponse.SC_OK);
                 result = reviewController.addReview(productId, jsonRequest, request, response);
             }
             // Đánh dấu đánh giá là hữu ích: /api/reviews/{reviewId}/helpful
@@ -141,16 +150,17 @@ public class ReviewServlet extends HttpServlet {
                 
                 // Đánh dấu đánh giá là hữu ích
                 result = reviewController.markReviewHelpful(reviewId, jsonRequest, request, response);
+                response.setStatus(HttpServletResponse.SC_OK);
             }
             else {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 result = Map.of("error", "Endpoint không hợp lệ");
             }
+        }catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             result = Map.of("error", "Có lỗi xảy ra: " + e.getMessage());
             e.printStackTrace();
         }
-        
         // Trả về kết quả dưới dạng JSON
         try (PrintWriter out = response.getWriter()) {
             out.print(gson.toJson(result));

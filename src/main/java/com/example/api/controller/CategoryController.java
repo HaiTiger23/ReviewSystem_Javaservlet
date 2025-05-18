@@ -69,8 +69,8 @@ public class CategoryController {
      * Thêm danh mục mới (chỉ admin)
      */
     public Map<String, Object> addCategory(JsonObject jsonRequest, HttpServletRequest request, HttpServletResponse response) {
-        Map<String, Object> result = new HashMap<>();
-        
+            Map<String, Object> result = new HashMap<>();
+            
         try {
             // Kiểm tra quyền admin
             if (!isAdmin(request, response)) {

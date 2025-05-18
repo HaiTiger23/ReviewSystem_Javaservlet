@@ -169,6 +169,7 @@ public class Product {
                 ", categoryId=" + categoryId +
                 ", rating=" + rating +
                 ", reviewCount=" + reviewCount +
+                ", isReviewed="+isReviewed +
                 "}";
     }
 }
