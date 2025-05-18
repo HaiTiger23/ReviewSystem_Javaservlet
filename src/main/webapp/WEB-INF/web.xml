@@ -60,6 +60,10 @@
     <servlet-name>ReviewServlet</servlet-name>
     <url-pattern>/api/product-reviews/*</url-pattern>
   </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ReviewServlet</servlet-name>
+    <url-pattern>/api/user/*</url-pattern>
+  </servlet-mapping>
   
   <!-- Cấu hình TestDatabaseServlet -->
   <servlet>

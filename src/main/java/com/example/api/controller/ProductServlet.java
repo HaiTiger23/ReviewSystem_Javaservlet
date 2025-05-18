@@ -52,6 +52,14 @@ public class ProductServlet extends HttpServlet {
             return;
         }
 
+        // Xử lý endpoint lấy danh sách sản phẩm đã bookmark
+        System.out.println("pathInfo: " + pathInfo);
+        if (pathInfo != null && pathInfo.equals("/bookmark-user")) {
+            Map<String, Object> result = productController.getBookmarkedProducts(request, response);
+            sendJsonResponse(response, result);
+            return;
+        }
+
         // Xử lý các endpoint khác nhau
         Map<String, Object> result;
 

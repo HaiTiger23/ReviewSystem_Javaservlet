@@ -11,12 +11,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Lớp Data Access Object cho Product, cung cấp các phương thức để tương tác với
  * cơ sở dữ liệu
  */
 public class ProductDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(ProductDAO.class.getName());
 
     /**
      * Lấy danh sách sản phẩm với phân trang và lọc
@@ -667,5 +671,105 @@ public class ProductDAO {
         product.setCreatedAt(rs.getTimestamp("created_at"));
         product.setUpdatedAt(rs.getTimestamp("updated_at"));
         return product;
+    }
+
+    /**
+     * Lấy danh sách sản phẩm đã bookmark của user
+     * 
+     * @param userId ID của người dùng
+     * @param page Trang hiện tại
+     * @param limit Số sản phẩm mỗi trang
+     * @param sort Cách sắp xếp (price_asc, price_desc, name_asc, name_desc, bookmark_date_desc)
+     * @return Danh sách sản phẩm
+     */
+    public List<Map<String, Object>> getBookmarkedProducts(Integer userId, int page, int limit, String sort) {
+        List<Map<String, Object>> products = new ArrayList<>();
+        
+        try (Connection conn = DatabaseUtil.getConnection()) {
+            // Tạo câu query với ORDER BY tùy thuộc vào tham số sort
+            StringBuilder queryBuilder = new StringBuilder();
+            queryBuilder.append("SELECT p.*, b.created_at as bookmark_date, ");
+            queryBuilder.append("pi.image_path as product_image ");
+            queryBuilder.append("FROM products p ");
+            queryBuilder.append("INNER JOIN bookmarks b ON p.id = b.product_id ");
+            queryBuilder.append("LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = true ");
+            queryBuilder.append("WHERE b.user_id = ? ");
+            
+            // Thêm ORDER BY tùy thuộc vào sort
+            if (sort != null) {
+                switch (sort) {
+                    case "price_asc":
+                        queryBuilder.append("ORDER BY p.price ASC ");
+                        break;
+                    case "price_desc":
+                        queryBuilder.append("ORDER BY p.price DESC ");
+                        break;
+                    case "name_asc":
+                        queryBuilder.append("ORDER BY p.name ASC ");
+                        break;
+                    case "name_desc":
+                        queryBuilder.append("ORDER BY p.name DESC ");
+                        break;
+                    default:
+                        queryBuilder.append("ORDER BY b.created_at DESC "); // Mặc định sort theo ngày bookmark
+                }
+            } else {
+                queryBuilder.append("ORDER BY b.created_at DESC ");
+            }
+            
+            // Thêm LIMIT và OFFSET cho phân trang
+            queryBuilder.append("LIMIT ? OFFSET ?");
+            
+            try (PreparedStatement stmt = conn.prepareStatement(queryBuilder.toString())) {
+                stmt.setInt(1, userId);
+                stmt.setInt(2, limit);
+                stmt.setInt(3, (page - 1) * limit);
+                
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    Map<String, Object> product = new HashMap<>();
+                    product.put("id", rs.getInt("id"));
+                    product.put("name", rs.getString("name"));
+                    product.put("description", rs.getString("description"));
+                    product.put("price", rs.getBigDecimal("price"));
+                    String imagePath = rs.getString("product_image");
+                    if (imagePath != null) {
+                        product.put("image", imagePath);
+                    }
+                    product.put("category_id", rs.getInt("category_id"));
+                    product.put("created_at", rs.getTimestamp("created_at"));
+                    product.put("updated_at", rs.getTimestamp("updated_at"));
+                    product.put("bookmark_date", rs.getTimestamp("bookmark_date"));
+                    
+                    products.add(product);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy danh sách sản phẩm đã bookmark: " + e.getMessage(), e);
+        }
+        
+        return products;
+    }
+    
+    /**
+     * Lấy tổng số sản phẩm đã bookmark của user
+     * 
+     * @param userId ID của người dùng
+     * @return Tổng số sản phẩm
+     */
+    public int getBookmarkedProductCount(Integer userId) {
+        try (Connection conn = DatabaseUtil.getConnection()) {
+            String query = "SELECT COUNT(*) as total FROM bookmarks WHERE user_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, userId);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    return rs.getInt("total");
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi đếm số sản phẩm đã bookmark: " + e.getMessage(), e);
+        }
+        return 0;
     }
 }

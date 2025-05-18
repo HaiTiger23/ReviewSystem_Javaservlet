@@ -8,11 +8,15 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Lớp Data Access Object cho User, cung cấp các phương thức để tương tác với cơ sở dữ liệu
  */
 public class UserDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(UserDAO.class.getName());
 
     /**
      * Đăng ký người dùng mới
@@ -285,26 +289,22 @@ public class UserDAO {
     /**
      * Cập nhật thông tin người dùng
      * 
-     * @param user thông tin người dùng cần cập nhật
-     * @return true nếu thành công, false nếu thất bại
+     * @param user Đối tượng User chứa thông tin cần cập nhật
+     * @return true nếu cập nhật thành công, false nếu có lỗi
      */
     public boolean updateUser(User user) {
-        String sql = "UPDATE users SET name = ?, email = ?, avatar = ?, role = ? WHERE id = ?";
-        
-        try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setString(1, user.getName());
-            stmt.setString(2, user.getEmail());
-            stmt.setString(3, user.getAvatar());
-            stmt.setString(4, user.getRole().toString());
-            stmt.setInt(5, user.getId());
-            
-            int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0;
-            
+        try (Connection conn = DatabaseUtil.getConnection()) {
+            String query = "UPDATE users SET name = ?, password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, user.getName());
+                stmt.setString(2, user.getPassword());
+                stmt.setInt(3, user.getId());
+                
+                int affectedRows = stmt.executeUpdate();
+                return affectedRows > 0;
+            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Lỗi khi cập nhật thông tin người dùng: " + e.getMessage(), e);
             return false;
         }
     }
@@ -442,4 +442,67 @@ public class UserDAO {
         
         return user;
     }
+
+    /**
+     * Lấy thông tin người dùng theo ID
+     * 
+     * @param userId ID người dùng
+     * @return Đối tượng User hoặc null nếu không tìm thấy
+     */
+    public User getUserById(Integer userId) {
+        try (Connection conn = DatabaseUtil.getConnection()) {
+            String query = "SELECT * FROM users WHERE id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, userId);
+                ResultSet rs = stmt.executeQuery();
+                
+                if (rs.next()) {
+                    User user = new User();
+                    user.setId(rs.getInt("id"));
+                    user.setEmail(rs.getString("email"));
+                    user.setName(rs.getString("name"));
+                    user.setPassword(rs.getString("password"));
+                    
+                    // Xử lý các cột có thể null hoặc không tồn tại
+                    try {
+                        user.setAvatar(rs.getString("avatar"));
+                    } catch (SQLException e) {
+                        // Bỏ qua nếu cột không tồn tại
+                    }
+                    
+                    try {
+                        user.setProvider(rs.getString("provider"));
+                        user.setProviderId(rs.getString("provider_id"));
+                    } catch (SQLException e) {
+                        // Bỏ qua nếu các cột không tồn tại
+                    }
+                    
+                    try {
+                        user.setCreatedAt(rs.getTimestamp("created_at"));
+                        user.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    } catch (SQLException e) {
+                        // Bỏ qua nếu các cột không tồn tại
+                    }
+                    
+                    try {
+                        String roleStr = rs.getString("role");
+                        if (roleStr != null) {
+                            user.setRole(User.Role.valueOf(roleStr.toUpperCase()));
+                        } else {
+                            user.setRole(User.Role.USER); // Mặc định là USER nếu không có role
+                        }
+                    } catch (SQLException | IllegalArgumentException e) {
+                        user.setRole(User.Role.USER); // Mặc định là USER nếu có lỗi
+                    }
+                    
+                    return user;
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy thông tin người dùng: " + e.getMessage(), e);
+        }
+        return null;
+    }
+    
+   
 }

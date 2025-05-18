@@ -84,7 +84,7 @@ public class CategoryController {
             Integer parentId = null;
             
             if (jsonRequest.has("parent_id") && !jsonRequest.get("parent_id").isJsonNull()) {
-                parentId = jsonRequest.get("parent_id").getAsInt();
+                parentId = jsonRequest.get("parent_id").getAsInt(); 
                 
                 // Kiểm tra danh mục cha có tồn tại không
                 if (!categoryDAO.isCategoryExists(parentId)) {

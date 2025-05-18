@@ -82,6 +82,8 @@ public class AuthServlet extends HttpServlet {
                 result = authController.logout(request, response);
             } else if (pathInfo.equals("/change-password")) {
                 result = authController.changePassword(jsonRequest, request, response);
+            } else if (pathInfo.equals("/update-profile")) {
+                result = authController.updateProfile(jsonRequest, request, response);
             } else {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 result = Map.of("error", "Endpoint không hợp lệ");

@@ -460,4 +460,124 @@ public class ReviewDAO {
             stmt.executeUpdate();
         }
     }
+    
+    /**
+     * Lấy danh sách đánh giá của người dùng
+     * 
+     * @param userId ID người dùng
+     * @param page Số trang
+     * @param limit Số lượng đánh giá mỗi trang
+     * @param sort Sắp xếp (date_desc, rating_desc, helpful_desc)
+     * @return Map chứa danh sách đánh giá và thông tin phân trang
+     */
+    public Map<String, Object> getUserReviews(Integer userId, int page, int limit, String sort) {
+        Map<String, Object> result = new HashMap<>();
+        List<Review> reviews = new ArrayList<>();
+        
+        try (Connection conn = DatabaseUtil.getConnection()) {
+            // Đếm tổng số đánh giá của người dùng
+            String countQuery = "SELECT COUNT(*) FROM reviews WHERE user_id = ?";
+            try (PreparedStatement countStmt = conn.prepareStatement(countQuery)) {
+                countStmt.setInt(1, userId);
+                ResultSet countRs = countStmt.executeQuery();
+                int total = 0;
+                if (countRs.next()) {
+                    total = countRs.getInt(1);
+                }
+                
+                // Tính toán phân trang
+                int offset = (page - 1) * limit;
+                int totalPages = (int) Math.ceil((double) total / limit);
+                
+                // Tạo thông tin phân trang
+                Map<String, Object> pagination = new HashMap<>();
+                pagination.put("total", total);
+                pagination.put("page", page);
+                pagination.put("limit", limit);
+                pagination.put("totalPages", totalPages);
+                result.put("pagination", pagination);
+                
+                // Nếu không có đánh giá, trả về danh sách rỗng
+                if (total == 0) {
+                    result.put("reviews", reviews);
+                    return result;
+                }
+            }
+            
+            // Xác định cách sắp xếp
+            String orderBy;
+            switch (sort) {
+                case "rating_desc":
+                    orderBy = "r.rating DESC";
+                    break;
+                case "helpful_desc":
+                    orderBy = "r.helpful_count DESC";
+                    break;
+                case "date_desc":
+                default:
+                    orderBy = "r.created_at DESC";
+                    break;
+            }
+            
+            // Truy vấn lấy đánh giá với thông tin sản phẩm và ảnh chính
+            String query = "SELECT r.*, " +
+                           "p.name as product_name, " +
+                           "p.slug as product_slug, " +
+                           "p.price as product_price, " +
+                           "p.rating as product_rating, " +
+                           "p.review_count as product_review_count, " +
+                           "pi.image_path as product_image " +
+                           "FROM reviews r " +
+                           "JOIN products p ON r.product_id = p.id " +
+                           "LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = true " +
+                           "WHERE r.user_id = ? " +
+                           "ORDER BY " + orderBy + " " +
+                           "LIMIT ? OFFSET ?";
+            
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, userId);
+                stmt.setInt(2, limit);
+                stmt.setInt(3, (page - 1) * limit);
+                
+                ResultSet rs = stmt.executeQuery();
+                
+                while (rs.next()) {
+                    Review review = new Review();
+                    review.setId(rs.getInt("id"));
+                    review.setProductId(rs.getInt("product_id"));
+                    review.setUserId(userId);
+                    review.setRating(rs.getInt("rating"));
+                    review.setContent(rs.getString("content"));
+                    review.setHelpfulCount(rs.getInt("helpful_count"));
+                    review.setCreatedAt(rs.getTimestamp("created_at"));
+                    review.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    
+                    // Thêm thông tin sản phẩm vào review
+                    Map<String, String> product = new HashMap<>();
+                    product.put("name", rs.getString("product_name"));
+                    product.put("slug", rs.getString("product_slug"));
+                    product.put("price", String.valueOf(rs.getDouble("product_price")));
+                    product.put("rating", String.format("%.1f", rs.getDouble("product_rating")));
+                    product.put("reviewCount", String.valueOf(rs.getInt("product_review_count")));
+                    
+                    // Thêm ảnh sản phẩm nếu có
+                    String imagePath = rs.getString("product_image");
+                    if (imagePath != null) {
+                        product.put("image", imagePath);
+                    }
+                    
+                    review.setProduct(product);
+                    
+                    reviews.add(review);
+                }
+            }
+            
+            result.put("reviews", reviews);
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy danh sách đánh giá của người dùng: " + e.getMessage(), e);
+        }
+        
+        return result;
+    }
 }

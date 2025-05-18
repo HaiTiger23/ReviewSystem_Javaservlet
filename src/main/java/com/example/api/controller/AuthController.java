@@ -519,6 +519,96 @@ public class AuthController {
     }
     
     /**
+     * Cập nhật thông tin người dùng
+     * 
+     * @param jsonRequest Dữ liệu JSON từ request body
+     * @param request Yêu cầu HTTP
+     * @param response Phản hồi HTTP
+     * @return Kết quả xử lý dạng JSON
+     */
+    public Map<String, Object> updateProfile(JsonObject jsonRequest, HttpServletRequest request, HttpServletResponse response) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // Kiểm tra xác thực
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                result.put("error", "Chưa đăng nhập");
+                return result;
+            }
+            
+            String token = authHeader.substring(7);
+            Integer userId = JwtUtil.getUserIdFromToken(token);
+            if (userId == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                result.put("error", "Token không hợp lệ");
+                return result;
+            }
+            
+            // Kiểm tra dữ liệu đầu vào
+            if (jsonRequest == null) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                result.put("error", "Vui lòng cung cấp thông tin cần cập nhật");
+                return result;
+            }
+            
+            String name = jsonRequest.has("name") ? jsonRequest.get("name").getAsString() : null;
+            String password = jsonRequest.has("password") ? jsonRequest.get("password").getAsString() : null;
+            String confirmPassword = jsonRequest.has("confirmPassword") ? jsonRequest.get("confirmPassword").getAsString() : null;
+            
+            // Validate dữ liệu
+            if (name == null || name.trim().isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                result.put("error", "Tên không được để trống");
+                return result;
+            }
+            
+            // Nếu có cập nhật mật khẩu
+            if (password != null) {
+                if (password.length() < 6) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    result.put("error", "Mật khẩu phải có ít nhất 6 ký tự");
+                    return result;
+                }
+                
+                if (confirmPassword == null || !confirmPassword.equals(password)) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    result.put("error", "Mật khẩu xác nhận không khớp");
+                    return result;
+                }
+            }
+            
+            // Cập nhật thông tin người dùng
+            boolean success = authService.updateProfile(userId, name, password);
+            
+            if (success) {
+                // Lấy thông tin người dùng sau khi cập nhật
+                User updatedUser = authService.getUserById(userId);
+                
+                // Thành công
+                response.setStatus(HttpServletResponse.SC_OK);
+                result.put("message", "Cập nhật thông tin thành công");
+                result.put("user", Map.of(
+                    "id", updatedUser.getId(),
+                    "name", updatedUser.getName(),
+                    "email", updatedUser.getEmail()
+                ));
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                result.put("error", "Không thể cập nhật thông tin");
+            }
+            
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            result.put("error", "Có lỗi xảy ra: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return result;
+    }
+    
+    /**
      * Chuyển đổi đối tượng User thành DTO (Data Transfer Object)
      * 
      * @param user Đối tượng User

@@ -1,6 +1,7 @@
 package com.example.api.model;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Model đại diện cho đánh giá sản phẩm
@@ -18,6 +19,7 @@ public class Review {
     // Thông tin bổ sung cho API
     private User user;
     private Boolean isHelpful;
+    private Map<String, String> product;
     
     public Review() {
     }
@@ -111,5 +113,13 @@ public class Review {
 
     public void setIsHelpful(Boolean isHelpful) {
         this.isHelpful = isHelpful;
+    }
+
+    public Map<String, String> getProduct() {
+        return product;
+    }
+
+    public void setProduct(Map<String, String> product) {
+        this.product = product;
     }
 }

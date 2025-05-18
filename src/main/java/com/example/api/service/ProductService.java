@@ -96,4 +96,18 @@ public class ProductService {
     public boolean canUserEditProduct(int productId, int userId) {
         return productDAO.canUserEditProduct(productId, userId);
     }
+
+    /**
+     * Get bookmarked products for a user with pagination and sorting
+     */
+    public List<Map<String, Object>> getBookmarkedProducts(Integer userId, int page, int limit, String sort) {
+        return productDAO.getBookmarkedProducts(userId, page, limit, sort);
+    }
+
+    /**
+     * Get total count of bookmarked products for a user
+     */
+    public int getBookmarkedProductCount(Integer userId) {
+        return productDAO.getBookmarkedProductCount(userId);
+    }
 }

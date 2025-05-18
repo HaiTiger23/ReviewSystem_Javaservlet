@@ -365,4 +365,170 @@ public class ReviewController {
         
         return result;
     }
+    
+    /**
+     * Lấy danh sách đánh giá của người dùng đã đăng nhập
+     * 
+     * @param request Yêu cầu HTTP
+     * @param response Phản hồi HTTP
+     * @return Kết quả xử lý dạng JSON
+     */
+    public Map<String, Object> getUserReviews(HttpServletRequest request, HttpServletResponse response) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // Kiểm tra xác thực
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                result.put("error", "Chưa đăng nhập");
+                return result;
+            }
+            
+            String token = authHeader.substring(7);
+            Integer userId = JwtUtil.getUserIdFromToken(token);
+            if (userId == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                result.put("error", "Token không hợp lệ");
+                return result;
+            }
+            
+            // Lấy tham số phân trang từ request
+            int page = 1;
+            int limit = 10;
+            String sort = "date_desc";
+            
+            String pageParam = request.getParameter("page");
+            String limitParam = request.getParameter("limit");
+            String sortParam = request.getParameter("sort");
+            
+            if (pageParam != null && !pageParam.trim().isEmpty()) {
+                try {
+                    page = Integer.parseInt(pageParam);
+                    if (page < 1) page = 1;
+                } catch (NumberFormatException e) {
+                    // Giữ giá trị mặc định
+                }
+            }
+            
+            if (limitParam != null && !limitParam.trim().isEmpty()) {
+                try {
+                    limit = Integer.parseInt(limitParam);
+                    if (limit < 1) limit = 10;
+                    if (limit > 50) limit = 50;
+                } catch (NumberFormatException e) {
+                    // Giữ giá trị mặc định
+                }
+            }
+            
+            if (sortParam != null && !sortParam.trim().isEmpty()) {
+                if (sortParam.equals("rating_desc") || sortParam.equals("helpful_desc")) {
+                    sort = sortParam;
+                }
+            }
+            
+            // Lấy danh sách đánh giá của người dùng
+            result = reviewDAO.getUserReviews(userId, page, limit, sort);
+            response.setStatus(HttpServletResponse.SC_OK);
+            
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            result.put("error", "Có lỗi xảy ra: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Cập nhật đánh giá của người dùng
+     * 
+     * @param reviewId ID đánh giá
+     * @param jsonRequest Dữ liệu JSON từ request body
+     * @param request Yêu cầu HTTP
+     * @param response Phản hồi HTTP
+     * @return Kết quả xử lý dạng JSON
+     */
+    public Map<String, Object> updateUserReview(int reviewId, JsonObject jsonRequest, 
+                                              HttpServletRequest request, HttpServletResponse response) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // Kiểm tra xác thực
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                result.put("error", "Chưa đăng nhập");
+                return result;
+            }
+            
+            String token = authHeader.substring(7);
+            Integer userId = JwtUtil.getUserIdFromToken(token);
+            if (userId == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                result.put("error", "Token không hợp lệ");
+                return result;
+            }
+            
+            // Kiểm tra dữ liệu đầu vào
+            if (jsonRequest == null) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                result.put("error", "Vui lòng cung cấp dữ liệu đánh giá");
+                return result;
+            }
+            
+            Integer rating = jsonRequest.has("rating") ? jsonRequest.get("rating").getAsInt() : null;
+            String content = jsonRequest.has("content") ? jsonRequest.get("content").getAsString() : null;
+            
+            if (rating == null || content == null || content.trim().isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                result.put("error", "Vui lòng điền đầy đủ thông tin đánh giá");
+                return result;
+            }
+            
+            if (rating < 1 || rating > 5) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                result.put("error", "Điểm đánh giá phải từ 1 đến 5");
+                return result;
+            }
+            
+            // Kiểm tra đánh giá có tồn tại không và có phải của user không
+            Review existingReview = reviewDAO.getReviewById(reviewId);
+            if (existingReview == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                result.put("error", "Không tìm thấy đánh giá");
+                return result;
+            }
+            
+            if (existingReview.getUserId() != userId) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                result.put("error", "Bạn không có quyền cập nhật đánh giá này");
+                return result;
+            }
+            
+            // Cập nhật đánh giá
+            boolean success = reviewDAO.updateReview(reviewId, rating, content, userId);
+            
+            if (success) {
+                // Lấy thông tin đánh giá sau khi cập nhật
+                Review updatedReview = reviewDAO.getReviewById(reviewId);
+                
+                // Thành công
+                response.setStatus(HttpServletResponse.SC_OK);
+                result.put("message", "Cập nhật đánh giá thành công");
+                result.put("review", updatedReview);
+            } else {
+                // Lỗi khi cập nhật
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                result.put("error", "Không thể cập nhật đánh giá");
+            }
+            
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            result.put("error", "Có lỗi xảy ra: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return result;
+    }
 }

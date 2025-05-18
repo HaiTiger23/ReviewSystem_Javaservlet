@@ -647,4 +647,63 @@ public class ProductController {
         result.put("error", "Không thể cập nhật bookmark");
         return result;
     }
+    
+    /**
+     * Lấy danh sách sản phẩm đã bookmark của user
+     * 
+     * @param request Yêu cầu HTTP
+     * @param response Phản hồi HTTP
+     * @return Kết quả xử lý dạng JSON
+     */
+    public Map<String, Object> getBookmarkedProducts(HttpServletRequest request, HttpServletResponse response) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // Kiểm tra xác thực
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                result.put("error", "Chưa đăng nhập");
+                return result;
+            }
+            
+            // Lấy token và userId
+            String token = authHeader.substring(7);
+            Integer userId = JwtUtil.getUserIdFromToken(token);
+            if (userId == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                result.put("error", "Token không hợp lệ");
+                return result;
+            }
+            
+            // Lấy tham số phân trang
+            int page = getIntParameter(request, "page", 1);
+            int limit = getIntParameter(request, "limit", 10);
+            String sort = request.getParameter("sort"); // có thể sort theo giá, tên, ngày bookmark
+            
+            // Lấy danh sách sản phẩm đã bookmark
+            List<Map<String, Object>> products = productService.getBookmarkedProducts(userId, page, limit, sort);
+            int totalProducts = productService.getBookmarkedProductCount(userId);
+            
+            // Tính toán thông tin phân trang
+            int totalPages = (int) Math.ceil((double) totalProducts / limit);
+            
+            // Trả về kết quả
+            result.put("products", products);
+            result.put("pagination", Map.of(
+                "currentPage", page,
+                "totalPages", totalPages,
+                "totalItems", totalProducts,
+                "itemsPerPage", limit
+            ));
+            response.setStatus(HttpServletResponse.SC_OK);
+            
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            result.put("error", "Có lỗi xảy ra: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return result;
+    }
 }
