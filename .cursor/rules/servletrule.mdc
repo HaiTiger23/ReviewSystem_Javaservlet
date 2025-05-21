@@ -1,0 +1,16 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+All API routes must start with /admin.
+
+Each Servlet is mapped to a /admin/... path.
+
+Each API checks if user role is admin, otherwise returns 403.
+
+Layout for admin is separate from user layout (handled frontend-side).
+
+Reuse existing DAO, model, service if possible.
+
+Add code only where needed.

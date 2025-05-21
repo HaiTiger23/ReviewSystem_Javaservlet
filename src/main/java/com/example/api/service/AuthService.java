@@ -3,9 +3,11 @@ package com.example.api.service;
 import com.example.api.dao.UserDAO;
 import com.example.api.model.User;
 import com.example.api.util.PasswordUtil;
+import com.example.api.util.JwtUtil;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.mindrot.jbcrypt.BCrypt;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Lớp dịch vụ xử lý các chức năng xác thực người dùng
@@ -13,9 +15,11 @@ import org.mindrot.jbcrypt.BCrypt;
 public class AuthService {
     private UserDAO userDAO;
     private static final Logger LOGGER = Logger.getLogger(AuthService.class.getName());
+    private JwtUtil jwtUtil;
     
     public AuthService() {
         this.userDAO = new UserDAO();
+        this.jwtUtil = new JwtUtil();
     }
     
     /**
@@ -215,5 +219,35 @@ public class AuthService {
      */
     public int getUserBookmarkCount(int userId) {
         return userDAO.getBookmarkCount(userId);
+    }
+
+    /**
+     * Get user from request's authorization token
+     * 
+     * @param request HTTP request containing the authorization header
+     * @return User object if token is valid and user exists, null otherwise
+     */
+    public User getUserFromRequest(HttpServletRequest request) {
+        // Get authorization header
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+
+        // Extract token
+        String token = authHeader.substring(7);
+        
+        try {
+            // Verify and get user ID from token
+            Integer userId = jwtUtil.getUserIdFromToken(token);
+            if (userId == null) {
+                return null;
+            }
+
+            // Get user from database
+            return userDAO.getUserById(userId);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
