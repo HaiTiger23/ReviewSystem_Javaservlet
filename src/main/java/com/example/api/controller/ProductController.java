@@ -132,6 +132,12 @@ public class ProductController {
             String description = request.getParameter("description");
             String specificationsJson = request.getParameter("specifications");
             
+            System.out.println("name: " + name);
+            System.out.println("categoryIdStr: " + categoryIdStr);
+            System.out.println("priceStr: " + priceStr);
+            System.out.println("description: " + description);
+            System.out.println("specificationsJson: " + specificationsJson);
+            
             // Kiểm tra dữ liệu đầu vào
             if (name == null || name.trim().isEmpty() ||
                 categoryIdStr == null || categoryIdStr.trim().isEmpty() ||

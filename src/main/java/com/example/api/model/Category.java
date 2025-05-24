@@ -12,6 +12,7 @@ public class Category {
     private Integer parentId;
     private Date createdAt;
     private Date updatedAt;
+    private int productCount;
     
     // Constructors
     public Category() {
@@ -71,6 +72,14 @@ public class Category {
         this.updatedAt = updatedAt;
     }
     
+    public int getProductCount() {
+        return productCount;
+    }
+    
+    public void setProductCount(int productCount) {
+        this.productCount = productCount;
+    }
+    
     @Override
     public String toString() {
         return "Category{" +
@@ -78,6 +87,9 @@ public class Category {
                 ", name='" + name + '\'' +
                 ", slug='" + slug + '\'' +
                 ", parentId=" + parentId +
-                "}";
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", productCount=" + productCount +
+                    "}";
     }
 }

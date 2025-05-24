@@ -280,6 +280,15 @@ public class ReviewController {
                 result.put("error", "Không tìm thấy đánh giá");
                 return result;
             }
+            User user = authService.getUserFromRequest(request);
+            System.out.println(String.format("User ID: %d, Review User ID: %d, Is Admin: %s", user.getId(), existingReview.getUserId(), user.isAdmin() ? "true" : "false"));
+            // đánh giá không phải của bạn hoặc bạn không phải admin
+            if ((existingReview.getUserId() != user.getId()) && !user.isAdmin()) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                System.out.println("You do not have permission to delete this review");
+                result.put("error", "Bạn không có quyền xóa đánh giá này");
+                return result;
+            }
             
             // Xóa đánh giá
             boolean success = reviewDAO.deleteReview(reviewId, userId);

@@ -71,7 +71,9 @@ public class AuthServlet extends HttpServlet {
             } else if (pathInfo.equals("/register")) {
                 result = authController.register(jsonRequest, request, response);
             } else if (pathInfo.equals("/login")) {
-                result = authController.login(jsonRequest, request, response);
+                result = authController.login(jsonRequest, request, response, "USER");
+            }else if (pathInfo.equals("/login-admin")) {
+                result = authController.login(jsonRequest, request, response, "ADMIN");
             } else if (pathInfo.equals("/login-provider")) {
                 result = authController.loginWithProvider(jsonRequest, request, response);
             } else if (pathInfo.equals("/forgot-password")) {

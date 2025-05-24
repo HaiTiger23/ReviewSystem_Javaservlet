@@ -51,7 +51,12 @@ public class CategoryDAO {
      */
     public List<Category> getAllCategories() {
         List<Category> categories = new ArrayList<>();
-        String sql = "SELECT id, name, slug, parent_id, created_at, updated_at FROM categories ORDER BY name";
+        String sql = "SELECT c.id, c.name, c.slug, c.parent_id, c.created_at, c.updated_at, " +
+                     "COUNT(p.id) as product_count " +
+                     "FROM categories c " +
+                     "LEFT JOIN products p ON c.id = p.category_id " +
+                     "GROUP BY c.id, c.name, c.slug, c.parent_id, c.created_at, c.updated_at " +
+                     "ORDER BY c.name";
         
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -65,12 +70,14 @@ public class CategoryDAO {
                 category.setParentId(rs.getObject("parent_id") != null ? rs.getInt("parent_id") : null);
                 category.setCreatedAt(rs.getTimestamp("created_at"));
                 category.setUpdatedAt(rs.getTimestamp("updated_at"));
+                // Thêm số lượng sản phẩm
+                category.setProductCount(rs.getInt("product_count"));
                 
                 categories.add(category);
             }
             
         } catch (SQLException e) {
-            System.err.println("Lu1ed7i khi lu1ea5y danh su00e1ch danh mu1ee5c: " + e.getMessage());
+            System.err.println("Lỗi khi lấy danh sách danh mục: " + e.getMessage());
             e.printStackTrace();
         }
         

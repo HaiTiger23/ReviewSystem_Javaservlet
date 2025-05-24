@@ -252,6 +252,7 @@ public class CategoryController {
         map.put("parent_id", category.getParentId());
         map.put("created_at", category.getCreatedAt());
         map.put("updated_at", category.getUpdatedAt());
+        map.put("product_count", category.getProductCount());
         return map;
     }
     

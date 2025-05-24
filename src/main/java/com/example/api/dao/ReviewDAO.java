@@ -250,11 +250,10 @@ public class ReviewDAO {
     public boolean deleteReview(int reviewId, int userId) {
         try (Connection conn = DatabaseUtil.getConnection()) {
             // Kiểm tra quyền xóa
-            String checkQuery = "SELECT product_id FROM reviews WHERE id = ? AND user_id = ?";
+            String checkQuery = "SELECT product_id FROM reviews WHERE id = ? ";
             int productId;
             try (PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
                 checkStmt.setInt(1, reviewId);
-                checkStmt.setInt(2, userId);
                 ResultSet rs = checkStmt.executeQuery();
                 if (!rs.next()) {
                     // Không tìm thấy đánh giá hoặc không có quyền

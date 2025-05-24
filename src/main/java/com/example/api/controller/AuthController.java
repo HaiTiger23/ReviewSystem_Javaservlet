@@ -101,9 +101,10 @@ public class AuthController {
      * @param jsonRequest Dữ liệu JSON từ request body
      * @param request Yêu cầu HTTP
      * @param response Phản hồi HTTP
+     * @param role vai trò của người dùng
      * @return Kết quả xử lý dạng JSON
      */
-    public Map<String, Object> login(JsonObject jsonRequest, HttpServletRequest request, HttpServletResponse response) {
+    public Map<String, Object> login(JsonObject jsonRequest, HttpServletRequest request, HttpServletResponse response, String role) {
         Map<String, Object> result = new HashMap<>();
         
         try {
@@ -128,8 +129,15 @@ public class AuthController {
             
             // Đăng nhập
             User user = authService.login(email, password);
+
+           
             
             if (user != null) {
+                if(!user.getRole().equals(User.Role.valueOf(role))) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    result.put("error", "Vai trò không hợp lệ");
+                    return result;
+                }
                 // Tạo JWT token
                 String token = JwtUtil.generateToken(user.getId());
                 
