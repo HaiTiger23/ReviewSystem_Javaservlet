@@ -16,6 +16,14 @@ import java.util.UUID;
 public class FileUploadUtil {
     private static final String UPLOAD_DIR = "/Users/macbook/Project/JavaProject/ReviewSystem/uploads";
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "pdf");
+    
+    /**
+     * Lấy đường dẫn thư mục upload
+     * @return Đường dẫn tuyệt đối đến thư mục upload
+     */
+    public static String getUploadDir() {
+        return UPLOAD_DIR;
+    }
 
 
     /**

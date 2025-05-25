@@ -62,8 +62,22 @@ public class ProductService {
      * @param specifications Danh sách thông số kỹ thuật mới (nếu có)
      * @return true nếu thành công, false nếu thất bại
      */
-    public boolean updateProduct(Product product, List<String> images, List<ProductSpecification> specifications) {
+    public boolean updateProduct(Product product, List<String> images, List<ProductSpecification> specifications, List<String> deletedImages) {
+        // Xử lý xóa ảnh nếu có
+        if (deletedImages != null && !deletedImages.isEmpty()) {
+            for (String imagePath : deletedImages) {
+                // Xóa ảnh từ cơ sở dữ liệu
+                productDAO.deleteProductImage(product.getId(), imagePath);
+                System.out.println("Xóa ảnh: " + imagePath);
+            }
+        }
+        
         return productDAO.updateProduct(product, images, specifications);
+    }
+    
+    // Overload method để tương thích với code cũ
+    public boolean updateProduct(Product product, List<String> images, List<ProductSpecification> specifications) {
+        return updateProduct(product, images, specifications, null);
     }
     
     /**

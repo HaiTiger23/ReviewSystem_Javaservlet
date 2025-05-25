@@ -635,6 +635,29 @@ public class ProductDAO {
             stmt.executeUpdate();
         }
     }
+    
+    /**
+     * Xóa một ảnh cụ thể của sản phẩm
+     * 
+     * @param productId ID sản phẩm
+     * @param imagePath Đường dẫn ảnh cần xóa
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean deleteProductImage(int productId, String imagePath) {
+        String sql = "DELETE FROM product_images WHERE product_id = ? AND image_path = ?";
+        
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, productId);
+            stmt.setString(2, imagePath);
+            return stmt.executeUpdate() > 0;
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi xóa hình ảnh sản phẩm: " + e.getMessage(), e);
+            return false;
+        }
+    }
 
     /**
      * Xóa thông số kỹ thuật của sản phẩm

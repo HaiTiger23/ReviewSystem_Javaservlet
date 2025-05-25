@@ -20,16 +20,23 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
+import jakarta.servlet.annotation.MultipartConfig;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
+import java.io.File;
 
 /**
  * Controller xử lý các yêu cầu liên quan đến sản phẩm
  */
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024 * 2,  // 2MB
+    maxFileSize = 1024 * 1024 * 10,       // 10MB
+    maxRequestSize = 1024 * 1024 * 50     // 50MB
+)
 public class ProductController {
     private ProductService productService;
     private UserService userService;
@@ -448,27 +455,76 @@ public class ProductController {
                 }
             }
 
-            // Xử lý hình ảnh
-            List<String> images = new ArrayList<>();
-            boolean hasNewImages = false;
-
-            Collection<Part> parts = request.getParts();
-            for (Part part : parts) {
-                if (part.getName().startsWith("image_") && part.getSize() > 0) {
-                    // Lưu file và lấy đường dẫn
-                    String imagePath = FileUploadUtil.saveFile(part, "products");
-                    if (imagePath != null) {
-                        images.add(imagePath);
-                        hasNewImages = true;
+            // Xử lý xóa ảnh
+            List<String> deletedImagePaths = new ArrayList<>();
+            String imagesToDeleteJson = request.getParameter("images_to_delete");
+            System.out.println("imagesToDeleteJson: " + imagesToDeleteJson);
+            if (imagesToDeleteJson != null && !imagesToDeleteJson.trim().isEmpty()) {
+                try {
+                    JsonArray imagesToDeleteArray = JsonParser.parseString(imagesToDeleteJson).getAsJsonArray();
+                
+                    for (int i = 0; i < imagesToDeleteArray.size(); i++) {
+                        String imagePath = imagesToDeleteArray.get(i).getAsString();
+                        System.out.println("imagePath: " + imagePath);
+                        // Xóa file ảnh từ hệ thống file
+                        File fileToDelete = new File(imagePath);
+                        if (fileToDelete.exists() && fileToDelete.delete()) {
+                            System.out.println("Đã xóa ảnh: " + imagePath);
+                        }
+                        deletedImagePaths.add(imagePath);
                     }
+                } catch (Exception e) {
+                    System.err.println("Lỗi khi xử lý xóa ảnh: " + e.getMessage());
                 }
             }
 
+            // Xử lý thêm ảnh mới
+            List<String> images = new ArrayList<>();
+            boolean hasNewImages = false;
+
+            // Kiểm tra xem request có phải là multipart/form-data không
+            String contentType = request.getContentType();
+            if (contentType != null && contentType.startsWith("multipart/")) {
+                try {
+                    Collection<Part> parts = request.getParts();
+                    System.out.println("Total parts: " + parts.size());
+                    
+                    for (Part part : parts) {
+                        String partName = part.getName();
+                        System.out.println("Processing part: " + partName + ", size: " + part.getSize());
+                        
+                        // Xử lý các file ảnh mới (tên trường là new_images[])
+                        if (partName != null && partName.equals("new_images[]") && part.getSize() > 0) {
+                            System.out.println("Found new image part: " + part.getSubmittedFileName());
+                            
+                            // Lưu file và lấy đường dẫn
+                            String imagePath = FileUploadUtil.saveFile(part, "products");
+                            if (imagePath != null) {
+                                System.out.println("Saved new image to: " + imagePath);
+                                images.add(imagePath);
+                                hasNewImages = true;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Lỗi khi xử lý upload ảnh: " + e.getMessage());
+                    e.printStackTrace();
+                    
+                    result.put("error", "Lỗi khi xử lý upload ảnh: " + e.getMessage());
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    return result;
+                }
+            } else {
+                System.out.println("Request is not multipart/form-data");
+            }
+
+            
             // Cập nhật sản phẩm trong cơ sở dữ liệu
             boolean success = productService.updateProduct(
                     product,
                     hasNewImages ? images : null, // Chỉ cập nhật hình ảnh nếu có hình mới
-                    !specifications.isEmpty() ? specifications : null // Chỉ cập nhật thông số nếu có thông số mới
+                    !specifications.isEmpty() ? specifications : null, // Chỉ cập nhật thông số nếu có thông số mới
+                    !deletedImagePaths.isEmpty() ? deletedImagePaths : null // Danh sách ảnh đã xóa
             );
 
             if (success) {
