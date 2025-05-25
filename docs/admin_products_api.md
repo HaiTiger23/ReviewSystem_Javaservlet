@@ -168,35 +168,148 @@ POST /api/admin/products
 ## 4. Cập Nhật Sản Phẩm
 
 ### Endpoint
-```
+
+```http
 PUT /api/admin/products/{id}
 ```
 
-### Parameters
-| Tham số | Kiểu | Vị trí | Mô tả |
-|---------|------|---------|-------|
-| id | number | path | ID của sản phẩm |
+### Tham số đường dẫn
 
-### Content-Type
-- `multipart/form-data` (khi upload file)
-- `application/json` (khi không có file)
+| Tham số | Kiểu | Bắt buộc | Mô tả |
+|---------|------|-----------|-------|
+| id | number | Có | ID của sản phẩm cần cập nhật |
 
-### Request Body
-Tương tự như khi thêm sản phẩm mới. Các trường không gửi lên sẽ giữ nguyên giá trị cũ.
+### Loại nội dung
 
-### Success Response (200 OK)
+- `multipart/form-data` (khi có upload file ảnh)
+- `application/json` (khi không có file ảnh)
+
+### Thân yêu cầu (multipart/form-data)
+
+#### Thông tin sản phẩm
+
+| Trường | Kiểu | Bắt buộc | Mô tả |
+|--------|------|-----------|-------|
+| name | string | Không | Tên sản phẩm |
+| price | number | Không | Giá sản phẩm (VND) |
+| description | string | Không | Mô tả chi tiết (HTML) |
+| categoryId | number | Không | ID danh mục sản phẩm |
+| stock | integer | Không | Số lượng tồn kho |
+| images | file[] | Không | Danh sách ảnh sản phẩm (tối đa 5 ảnh) |
+| thumbnail | file | Không | Ảnh đại diện sản phẩm |
+| isActive | boolean | Không | Trạng thái hiển thị (true/false) |
+| specifications | string | Không | Thông số kỹ thuật (JSON string) |
+
+### Thân yêu cầu (application/json)
+
 ```json
 {
-    "message": "Cập nhật sản phẩm thành công"
+  "name": "Tên sản phẩm",
+  "price": 1000000,
+  "description": "Mô tả sản phẩm",
+  "categoryId": 1,
+  "stock": 100,
+  "isActive": true,
+  "specifications": {
+    "màn hình": "6.5 inch",
+    "ram": "8GB",
+    "bộ nhớ": "128GB"
+  }
 }
 ```
 
-### Error Response
+### Phản hồi thành công (200 OK)
+
 ```json
 {
-    "error": "Không tìm thấy sản phẩm" // 404
+  "success": true,
+  "message": "Cập nhật sản phẩm thành công",
+  "data": {
+    "id": 1,
+    "name": "Tên sản phẩm",
+    "price": 1000000,
+    "categoryId": 1,
+    "thumbnail": "/uploads/products/1/thumbnail.jpg",
+    "images": [
+      "/uploads/products/1/image1.jpg",
+      "/uploads/products/1/image2.jpg"
+    ]
+  }
 }
 ```
+
+### Phản hồi lỗi
+
+#### 400 Bad Request - Dữ liệu không hợp lệ
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Dữ liệu đầu vào không hợp lệ",
+    "details": {
+      "price": "Giá phải lớn hơn 0"
+    }
+  }
+}
+```
+
+#### 401 Unauthorized - Chưa đăng nhập
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Vui lòng đăng nhập"
+  }
+}
+```
+
+#### 403 Forbidden - Không có quyền
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "FORBIDDEN",
+    "message": "Bạn không có quyền thực hiện thao tác này"
+  }
+}
+```
+
+#### 404 Not Found - Không tìm thấy sản phẩm
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "PRODUCT_NOT_FOUND",
+    "message": "Không tìm thấy sản phẩm"
+  }
+}
+```
+
+#### 500 Internal Server Error - Lỗi máy chủ
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INTERNAL_SERVER_ERROR",
+    "message": "Đã xảy ra lỗi, vui lòng thử lại sau"
+  }
+}
+```
+
+### Ghi chú
+
+1. Khi cập nhật ảnh sản phẩm, cần gửi lại toàn bộ danh sách ảnh mới (nếu muốn giữ ảnh cũ cần gửi lại)
+2. Nếu không gửi trường nào thì giá trị của trường đó sẽ được giữ nguyên
+3. Dung lượng tối đa mỗi ảnh là 5MB
+4. Định dạng ảnh hỗ trợ: JPG, PNG, JPEG
+5. Kích thước ảnh khuyến nghị: 800x800px
 
 ## 5. Xóa Sản Phẩm
 

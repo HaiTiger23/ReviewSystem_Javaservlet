@@ -180,7 +180,7 @@ public class ProductDAO {
                 if (rs.next()) {
                     Product product = mapResultSetToProduct(rs);
                     product.setCategoryName(rs.getString("category_name"));
-
+                    System.out.println("Product: " + product.toString());
                     // Lấy danh sách hình ảnh
                     product.setImages(getProductImages(conn, productId));
 
@@ -664,7 +664,7 @@ public class ProductDAO {
         product.setSlug(rs.getString("slug"));
         product.setDescription(rs.getString("description"));
         product.setPrice(rs.getBigDecimal("price"));
-        product.setCategoryId(rs.getInt("category_id"));
+        product.setCategoryId(rs.getInt("category_id"));    
         product.setUserId(rs.getInt("user_id"));
         product.setRating(rs.getDouble("rating"));
         product.setReviewCount(rs.getInt("review_count"));

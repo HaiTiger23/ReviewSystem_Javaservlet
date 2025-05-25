@@ -372,6 +372,11 @@ public class ProductController {
             String description = request.getParameter("description");
             String specificationsJson = request.getParameter("specifications");
             
+            System.out.println("name: " + name);
+            System.out.println("categoryIdStr: " + categoryIdStr);
+            System.out.println("priceStr: " + priceStr);
+            System.out.println("description: " + description);
+            System.out.println("specificationsJson: " + specificationsJson);
             // Kiểm tra dữ liệu đầu vào
             if (name == null || name.trim().isEmpty() ||
                 categoryIdStr == null || categoryIdStr.trim().isEmpty() ||
@@ -383,9 +388,24 @@ public class ProductController {
             }
             
             // Chuyển đổi dữ liệu
+            BigDecimal price = new BigDecimal(0);
             int categoryId = Integer.parseInt(categoryIdStr);
-            BigDecimal price = new BigDecimal(priceStr.replace(".", "").replace(",", "."));
-            
+            try {
+                // Xóa ký tự tiền tệ và dấu cách
+                String cleanPrice = priceStr.replaceAll("[^0-9,.]", "")
+                                          .replace(",", ".");
+                
+                // Kiểm tra xem chuỗi có rỗng không
+                if (cleanPrice.isEmpty()) {
+                    throw new NumberFormatException("Giá không hợp lệ");
+                }
+                
+                price = new BigDecimal(cleanPrice);
+            } catch (NumberFormatException e) {
+                result.put("error", "Định dạng giá không hợp lệ: " + priceStr);
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                return result;
+            }
             // Kiểm tra danh mục có tồn tại không
             if (!categoryDAO.isCategoryExists(categoryId)) {
                 result.put("error", "Danh mục không tồn tại (ID: " + categoryId + ")");
@@ -595,6 +615,7 @@ public class ProductController {
         result.put("rating", product.getRating());
         result.put("reviewCount", product.getReviewCount());
         result.put("isReviewed", product.isReviewed());
+        result.put("categoryId", product.getCategoryId());
         
         // Định dạng giá tiền
         NumberFormat formatter = new DecimalFormat("#,###.##");
