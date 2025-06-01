@@ -13,6 +13,7 @@ public class User {
     private String avatar;
     private String provider;
     private String providerId;
+    private int status;
     private Role role;
     private Date createdAt;
     private Date updatedAt;
@@ -34,16 +35,18 @@ public class User {
         this.name = name;
         this.email = email;
         this.password = password;
+        this.status = 1;
         this.role = Role.USER; // Mặc định là USER
     }
     
     // Constructor đầy đủ
-    public User(int id, String name, String email, String password, String avatar, Role role) {
+    public User(int id, String name, String email, String password, String avatar, int status, Role role) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.password = password;
         this.avatar = avatar;
+        this.status = status;
         this.role = role;
     }
     
@@ -86,6 +89,14 @@ public class User {
     
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+    }
+    
+    public int getStatus() {
+        return status;
+    }
+    
+    public void setStatus(int status) {
+        this.status = status;
     }
     
     public Role getRole() {
@@ -135,6 +146,7 @@ public class User {
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
                 ", avatar='" + avatar + '\'' +
+                ", status=" + status +
                 ", role=" + role +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +

@@ -69,4 +69,53 @@ public class UserService {
         // Lưu vào database
         return userDAO.updateUser(existingUser);
     }
+    
+    /**
+     * Đổi mật khẩu người dùng (cho admin)
+     * 
+     * @param userId ID người dùng
+     * @param newPassword Mật khẩu mới (đã được mã hoá)
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean updatePassword(int userId, String newPassword) {
+        // Kiểm tra người dùng tồn tại
+        User existingUser = userDAO.getUserById(userId);
+        if (existingUser == null) {
+            return false;
+        }
+        
+        // Cập nhật mật khẩu
+        return userDAO.updatePassword(userId, newPassword);
+    }
+    
+    /**
+     * Cập nhật trạng thái người dùng (khoá/mở khoá tài khoản)
+     * 
+     * @param userId ID người dùng
+     * @param status Trạng thái mới (1: hoạt động, 0: bị khoá)
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean updateStatus(int adminId, int userId, int status) {
+        // Kiểm tra người dùng tồn tại
+        User existingUserUpdate = userDAO.getUserById(userId);
+        if (existingUserUpdate == null) {
+            System.out.println("User not found");
+            return false;
+        }
+        
+        // Không cho phép tự khoá tài khoản của chính mình
+        if (existingUserUpdate.getId() == adminId) {
+            System.out.println("Cannot lock yourself :" + userId);
+            return false;
+        }
+        
+        // Cập nhật trạng thái
+        boolean success = userDAO.updateStatus(userId, status);
+        if (success) {
+            System.out.println("Update status success");
+        } else {
+            System.out.println("Update status failed");
+        }
+        return success;
+    }
 } 

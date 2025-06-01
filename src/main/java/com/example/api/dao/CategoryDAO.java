@@ -17,10 +17,38 @@ import java.util.List;
 public class CategoryDAO {
     
     /**
-     * Kiu1ec3m tra xem danh mu1ee5c cu00f3 tu1ed3n tu1ea1i hay khu00f4ng
+     * Lấy ID danh mục dựa trên slug
      * 
-     * @param categoryId ID cu1ee7a danh mu1ee5c cu1ea7n kiu1ec3m tra
-     * @return true nu1ebfu danh mu1ee5c tu1ed3n tu1ea1i, false nu1ebfu khu00f4ng
+     * @param slug Slug của danh mục cần tìm
+     * @return ID của danh mục nếu tìm thấy, null nếu không tìm thấy
+     */
+    public Integer getCategoryIdBySlug(String slug) {
+        String sql = "SELECT id FROM categories WHERE slug = ?";
+        
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, slug);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id");
+                }
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi lấy ID danh mục từ slug: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Kiểm tra xem danh mục có tồn tại hay không
+     * 
+     * @param categoryId ID của danh mục cần kiểm tra
+     * @return true nếu danh mục tồn tại, false nếu không
      */
     public boolean isCategoryExists(int categoryId) {
         String sql = "SELECT COUNT(*) FROM categories WHERE id = ?";

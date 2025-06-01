@@ -19,6 +19,55 @@ public class ReviewDAO {
     private static final Logger LOGGER = Logger.getLogger(ReviewDAO.class.getName());
     
     /**
+     * Đếm tổng số đánh giá
+     */
+    public int countTotalReviews() {
+        String sql = "SELECT COUNT(*) as total FROM reviews";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi đếm tổng số đánh giá", e);
+        }
+        return 0;
+    }
+    
+    /**
+     * Lấy danh sách đánh giá gần đây
+     * @param limit Số lượng đánh giá cần lấy
+     * @return Danh sách đánh giá
+     */
+    public List<Map<String, Object>> getRecentReviews(int limit) {
+        List<Map<String, Object>> reviews = new ArrayList<>();
+        String sql = "SELECT r.id, r.rating, r.content, p.name as product_name, u.name as user_name " +
+                    "FROM reviews r " +
+                    "JOIN products p ON r.product_id = p.id " +
+                    "JOIN users u ON r.user_id = u.id " +
+                    "ORDER BY r.created_at DESC LIMIT ?";
+                    
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, limit);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> review = new HashMap<>();
+                    review.put("id", rs.getInt("id"));
+                    review.put("productName", rs.getString("product_name"));
+                    review.put("rating", rs.getInt("rating"));
+                    review.put("userName", rs.getString("user_name"));
+                    reviews.add(review);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy danh sách đánh giá gần đây", e);
+        }
+        return reviews;
+    }
+    
+    /**
      * Lấy danh sách đánh giá của sản phẩm
      * 
      * @param productId ID sản phẩm

@@ -21,6 +21,79 @@ import java.util.logging.Logger;
 public class ProductDAO {
 
     private static final Logger LOGGER = Logger.getLogger(ProductDAO.class.getName());
+    
+    /**
+     * Đếm tổng số sản phẩm
+     */
+    public int countTotalProducts() {
+        String sql = "SELECT COUNT(*) as total FROM products";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi đếm tổng số sản phẩm", e);
+        }
+        return 0;
+    }
+    
+    /**
+     * Lấy danh sách sản phẩm gần đây
+     * @param limit Số lượng sản phẩm cần lấy
+     * @return Danh sách sản phẩm
+     */
+    public List<Map<String, Object>> getRecentProducts(int limit) {
+        List<Map<String, Object>> products = new ArrayList<>();
+        String sql = "SELECT p.id, p.name, p.price, c.name as category_name " +
+                    "FROM products p " +
+                    "LEFT JOIN categories c ON p.category_id = c.id " +
+                    "ORDER BY p.created_at DESC LIMIT ?";
+                    
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, limit);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> product = new HashMap<>();
+                    product.put("id", rs.getInt("id"));
+                    product.put("name", rs.getString("name"));
+                    product.put("price", String.format("%,d đ", rs.getLong("price")));
+                    product.put("category", rs.getString("category_name"));
+                    products.add(product);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy danh sách sản phẩm gần đây", e);
+        }
+        return products;
+    }
+    
+    /**
+     * Thống kê số lượng sản phẩm theo danh mục
+     */
+    public List<Map<String, Object>> getProductCountByCategory() {
+        List<Map<String, Object>> categories = new ArrayList<>();
+        String sql = "SELECT c.name as category, COUNT(p.id) as count " +
+                    "FROM categories c " +
+                    "LEFT JOIN products p ON c.id = p.category_id " +
+                    "GROUP BY c.id, c.name";
+                    
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> category = new HashMap<>();
+                category.put("category", rs.getString("category"));
+                category.put("count", rs.getInt("count"));
+                categories.add(category);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi thống kê sản phẩm theo danh mục", e);
+        }
+        return categories;
+    }
 
     /**
      * Lấy danh sách sản phẩm với phân trang và lọc

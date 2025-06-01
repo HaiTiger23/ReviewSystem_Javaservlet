@@ -68,13 +68,27 @@ public class ProductController {
         String categorySlug = request.getParameter("category");
         String search = request.getParameter("search");
         String sort = request.getParameter("sort");
-
+        
         // Chuyển đổi category slug thành category ID nếu cần
         Integer categoryId = null;
         if (categorySlug != null && !categorySlug.isEmpty()) {
-            // Trong thực tế, bạn sẽ cần một CategoryDAO để lấy ID từ slug
-            // Ở đây, chúng ta giả định categoryId = 1 cho mục đích minh họa
-            categoryId = 1;
+            CategoryDAO categoryDAO = new CategoryDAO();
+            categoryId = categoryDAO.getCategoryIdBySlug(categorySlug);
+            
+            // Nếu không tìm thấy danh mục, trả về danh sách rỗng
+            if (categoryId == null) {
+                Map<String, Object> emptyResult = new HashMap<>();
+                emptyResult.put("products", new ArrayList<>());
+                
+                Map<String, Object> pagination = new HashMap<>();
+                pagination.put("total", 0);
+                pagination.put("page", page);
+                pagination.put("limit", limit);
+                pagination.put("totalPages", 0);
+                
+                emptyResult.put("pagination", pagination);
+                return emptyResult;
+            }
         }
 
         // Lấy danh sách sản phẩm

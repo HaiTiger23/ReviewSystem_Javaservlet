@@ -17,6 +17,23 @@ import java.util.logging.Logger;
 public class UserDAO {
 
     private static final Logger LOGGER = Logger.getLogger(UserDAO.class.getName());
+    
+    /**
+     * Đếm tổng số người dùng
+     */
+    public int countTotalUsers() {
+        String sql = "SELECT COUNT(*) as total FROM users";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi đếm tổng số người dùng", e);
+        }
+        return 0;
+    }
 
     /**
      * Đăng ký người dùng mới
@@ -335,6 +352,31 @@ public class UserDAO {
     }
     
     /**
+     * Cập nhật trạng thái người dùng (khoá/mở khoá tài khoản)
+     * 
+     * @param userId ID người dùng
+     * @param status trạng thái mới (1: hoạt động, 0: bị khoá)
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean updateStatus(int userId, int status) {
+        String sql = "UPDATE users SET status = ? WHERE id = ?";
+        
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, status);
+            stmt.setInt(2, userId);
+            
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi cập nhật trạng thái người dùng: " + e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    /**
      * Xóa người dùng
      * 
      * @param userId ID người dùng cần xóa
@@ -427,6 +469,7 @@ public class UserDAO {
         user.setEmail(rs.getString("email"));
         user.setPassword(rs.getString("password"));
         user.setAvatar(rs.getString("avatar"));
+        user.setStatus(rs.getInt("status"));
         
         // Lấy ngay tạo và cập nhật
         user.setCreatedAt(rs.getTimestamp("created_at"));
@@ -462,6 +505,7 @@ public class UserDAO {
                     user.setEmail(rs.getString("email"));
                     user.setName(rs.getString("name"));
                     user.setPassword(rs.getString("password"));
+                    user.setStatus(rs.getInt("status"));
                     
                     // Xử lý các cột có thể null hoặc không tồn tại
                     try {

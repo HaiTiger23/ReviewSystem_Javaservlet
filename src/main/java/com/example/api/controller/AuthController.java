@@ -133,6 +133,11 @@ public class AuthController {
            
             
             if (user != null) {
+                if(user.getStatus() != 1) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    result.put("error", "Tài khoản của bạn đã bị khóa");
+                    return result;
+                }
                 if(!user.getRole().equals(User.Role.valueOf(role))) {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     result.put("error", "Vai trò không hợp lệ");
